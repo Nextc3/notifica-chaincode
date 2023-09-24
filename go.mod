@@ -1,13 +1,14 @@
-module github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-go
+module github.com/Nextc3/fabric-samples/asset-transfer-basic/notifica-chaincode
 
-go 1.17
+go 1.21.1
 
 require (
-	github.com/hyperledger/fabric-chaincode-go v0.0.0-20230228194215-b84622ba6a7a
+	github.com/hyperledger/fabric-chaincode-go v0.0.0-20230731094759-d626e9ab09b9
 	github.com/hyperledger/fabric-contract-api-go v1.2.1
 	github.com/hyperledger/fabric-protos-go v0.3.0
-	github.com/stretchr/testify v1.8.2
-	google.golang.org/protobuf v1.28.1
+	github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-go v0.0.0-20230919170840-6e71f634e206
+	github.com/stretchr/testify v1.8.4
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
