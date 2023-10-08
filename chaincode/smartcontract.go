@@ -3,9 +3,16 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
-
+	notifica_model "github.com/Nextc3/notifica-model"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"log"
+	"strconv"
 )
+
+/**
+Esse Chaincode foi criado no assetransfer original tentando fazer o minímo de modificaçẽos e preservando
+métodos originais
+**/
 
 // SmartContract provides functions for managing an Asset
 type SmartContract struct {
@@ -15,6 +22,7 @@ type SmartContract struct {
 // Asset describes basic details of what makes up a simple asset
 // Insert struct field in alphabetic order => to achieve determinism across languages
 // golang keeps the order when marshal to json but doesn't order automatically
+/**
 type Asset struct {
 	AppraisedValue int    `json:"AppraisedValue"`
 	Color          string `json:"Color"`
@@ -22,7 +30,17 @@ type Asset struct {
 	Owner          string `json:"Owner"`
 	Size           int    `json:"Size"`
 }
+**/
 
+var ultimoId int
+
+//gerarObjetoTeste retorna dois objetos com valores de teste sendo que o segundo pode ser ignorado
+
+func (s *SmartContract) GetUltimoId() int {
+	return ultimoId
+}
+
+/**
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	assets := []Asset{
@@ -48,7 +66,8 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 
 	return nil
 }
-
+**/
+/**
 // CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id string, color string, size int, owner string, appraisedValue int) error {
 	exists, err := s.AssetExists(ctx, id)
@@ -59,7 +78,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("the asset %s already exists", id)
 	}
 
-	asset := Asset{
+	asset := notifica_model.Asset{
 		ID:             id,
 		Color:          color,
 		Size:           size,
@@ -73,9 +92,25 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 	return ctx.GetStub().PutState(id, assetJSON)
 }
+**/
+func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInterface, asset string) error {
+
+	assetEmBytes := []byte(asset)
+	var a notifica_model.Asset
+	_ = json.Unmarshal(assetEmBytes, &a)
+
+	//Chave do estado é Asset + Id da notificacao
+	//Cuidado para não salvar uma Notificação com mesmo Id pois são utilizados para salvar na ledger
+	err := contexto.GetStub().PutState("Asset"+strconv.Itoa(a.Id), assetEmBytes)
+	if err != nil {
+		log.Fatalf("Erro ao salvar na ledger %s", err)
+	}
+
+	return err
+}
 
 // ReadAsset returns the asset stored in the world state with given id.
-func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*Asset, error) {
+func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*notifica_model.Asset, error) {
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
@@ -84,7 +119,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var asset Asset
+	var asset notifica_model.Asset
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return nil, err
@@ -94,6 +129,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 }
 
 // UpdateAsset updates an existing asset in the world state with provided parameters.
+/**
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id string, color string, size int, owner string, appraisedValue int) error {
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
@@ -131,7 +167,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 
 	return ctx.GetStub().DelState(id)
 }
-
+**/
 // AssetExists returns true when asset with given ID exists in world state
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
 	assetJSON, err := ctx.GetStub().GetState(id)
@@ -142,6 +178,7 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 	return assetJSON != nil, nil
 }
 
+/**
 // TransferAsset updates the owner field of asset with given id in world state, and returns the old owner.
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) (string, error) {
 	asset, err := s.ReadAsset(ctx, id)
@@ -164,9 +201,9 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 	return oldOwner, nil
 }
-
+**/
 // GetAllAssets returns all assets found in world state
-func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*Asset, error) {
+func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*notifica_model.Asset, error) {
 	// range query with empty string for startKey and endKey does an
 	// open-ended query of all assets in the chaincode namespace.
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
@@ -175,14 +212,14 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 	}
 	defer resultsIterator.Close()
 
-	var assets []*Asset
+	var assets []*notifica_model.Asset
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var asset Asset
+		var asset notifica_model.Asset
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
 			return nil, err
