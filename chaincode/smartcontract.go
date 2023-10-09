@@ -101,6 +101,8 @@ func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInter
 
 	//Chave do estado é Asset + Id da notificacao
 	//Cuidado para não salvar uma Notificação com mesmo Id pois são utilizados para salvar na ledger
+	a.Id = s.GetUltimoId()
+	a.Id++
 	err := contexto.GetStub().PutState("Asset"+strconv.Itoa(a.Id), assetEmBytes)
 	if err != nil {
 		log.Fatalf("Erro ao salvar na ledger %s", err)
