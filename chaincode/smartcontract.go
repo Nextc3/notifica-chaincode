@@ -5,7 +5,6 @@ import (
 	"fmt"
 	notifica_model "github.com/Nextc3/notifica-model"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"log"
 	"strconv"
 )
 
@@ -93,22 +92,43 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 **/
-func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInterface, asset string) error {
+func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInterface, dataNascimento string, sexo string, endereco string, bairro string, cidade string, estado string, pais string, doenca string, dataInicioSintomas string, dataDiagnostico string, dataNotificacao string, informacoesClinicas string) error {
 
-	assetEmBytes := []byte(asset)
-	var a notifica_model.Asset
-	_ = json.Unmarshal(assetEmBytes, &a)
-
+	/**exists, err := s.AssetExists(contexto, strconv.Itoa(id))
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("the asset %s already exists", id)
+	}
+	**/
+	asset := notifica_model.Asset{
+		Id:                  0,
+		DocType:             "notificacao",
+		DataNascimento:      dataNascimento,
+		Sexo:                sexo,
+		Endereco:            endereco,
+		Bairro:              bairro,
+		Cidade:              cidade,
+		Estado:              estado,
+		Pais:                pais,
+		Doenca:              doenca,
+		DataInicioSintomas:  dataInicioSintomas,
+		DataDiagnostico:     dataDiagnostico,
+		DataNotificacao:     dataNotificacao,
+		InformacoesClinicas: informacoesClinicas,
+	}
 	//Chave do estado é Asset + Id da notificacao
 	//Cuidado para não salvar uma Notificação com mesmo Id pois são utilizados para salvar na ledger
-	a.Id = s.GetUltimoId()
-	a.Id++
-	err := contexto.GetStub().PutState("Asset"+strconv.Itoa(a.Id), assetEmBytes)
+	asset.Id = s.GetUltimoId()
+	asset.Id++
+
+	assetJSON, err := json.Marshal(asset)
 	if err != nil {
-		log.Fatalf("Erro ao salvar na ledger %s", err)
+		return err
 	}
 
-	return err
+	return contexto.GetStub().PutState("asset"+strconv.Itoa(asset.Id), assetJSON)
 }
 
 // ReadAsset returns the asset stored in the world state with given id.
