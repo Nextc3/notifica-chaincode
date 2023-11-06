@@ -5,6 +5,7 @@ import (
 	"fmt"
 	notifica_model "github.com/Nextc3/notifica-model"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"log"
 	"strconv"
 )
 
@@ -92,62 +93,47 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 **/
-func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInterface, dataNascimento string, sexo string, endereco string, bairro string, cidade string, estado string, pais string, doenca string, dataInicioSintomas string, dataDiagnostico string, dataNotificacao string, informacoesClinicas string) error {
+func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInterface, asset string) error {
 
 	/**exists, err := s.AssetExists(contexto, strconv.Itoa(id))
-	if err != nil {
-		return err
-	}
-	if exists {
-		return fmt.Errorf("the asset %s already exists", id)
-	}
-	**/
-	asset := notifica_model.Asset{
-		Id:                  0,
-		DocType:             "notificacao",
-		DataNascimento:      dataNascimento,
-		Sexo:                sexo,
-		Endereco:            endereco,
-		Bairro:              bairro,
-		Cidade:              cidade,
-		Estado:              estado,
-		Pais:                pais,
-		Doenca:              doenca,
-		DataInicioSintomas:  dataInicioSintomas,
-		DataDiagnostico:     dataDiagnostico,
-		DataNotificacao:     dataNotificacao,
-		InformacoesClinicas: informacoesClinicas,
-	}
-	//Chave do estado é Asset + Id da notificacao
-	//Cuidado para não salvar uma Notificação com mesmo Id pois são utilizados para salvar na ledger
-	asset.Id = s.GetUltimoId()
-	asset.Id++
+	  if err != nil {
+	  	return err
+	  }
+	  if exists {
+	  	return fmt.Errorf("the asset %s already exists", id)
+	  }
+	  **/
 
-	assetJSON, err := json.Marshal(asset)
+	assetEmBytes := []byte(asset)
+	var a notifica_model.Asset
+	_ = json.Unmarshal(assetEmBytes, &a)
+
+	//Chave do estado é Asset + Id da asset
+	//Cuidado para não salvar uma Asset com mesmo Id pois são utilizados para salvar na ledger
+	err := contexto.GetStub().PutState("Asset"+strconv.Itoa(a.Id), assetEmBytes)
 	if err != nil {
-		return err
+		log.Fatalf("Erro ao salvar na ledger %s", err)
 	}
 
-	return contexto.GetStub().PutState("asset"+strconv.Itoa(asset.Id), assetJSON)
+	return err
 }
 
 // ReadAsset returns the asset stored in the world state with given id.
-func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*notifica_model.Asset, error) {
-	assetJSON, err := ctx.GetStub().GetState(id)
+func (s *SmartContract) ReadAsset(contexto contractapi.TransactionContextInterface, idAsset string) (*notifica_model.Asset, error) {
+	assetEmBytes, err := contexto.GetStub().GetState("Asset" + idAsset)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to read from world state: %v", err)
-	}
-	if assetJSON == nil {
-		return nil, fmt.Errorf("the asset %s does not exist", id)
+		return nil, fmt.Errorf("Falha em consultar em Notificação na Ledger com GetState %s", err.Error())
 	}
 
-	var asset notifica_model.Asset
-	err = json.Unmarshal(assetJSON, &asset)
-	if err != nil {
-		return nil, err
+	if assetEmBytes == nil {
+		return nil, fmt.Errorf("Notificacao%s não existe", idAsset)
 	}
 
-	return &asset, nil
+	asset := new(notifica_model.Asset)
+	_ = json.Unmarshal(assetEmBytes, asset)
+
+	return asset, nil
 }
 
 // UpdateAsset updates an existing asset in the world state with provided parameters.
@@ -191,13 +177,13 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 }
 **/
 // AssetExists returns true when asset with given ID exists in world state
-func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
-	assetJSON, err := ctx.GetStub().GetState(id)
+func (s *SmartContract) AssetExists(contexto contractapi.TransactionContextInterface, idAsset string) (bool, error) {
+	assetEmBytes, err := contexto.GetStub().GetState("Asset" + idAsset)
 	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
+		return false, fmt.Errorf("falhou em consultar a existência da Notificacao: %v", err)
 	}
 
-	return assetJSON != nil, nil
+	return assetEmBytes != nil, nil
 }
 
 /**
@@ -235,7 +221,9 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 	defer resultsIterator.Close()
 
 	var assets []*notifica_model.Asset
+	ultimoId = 0
 	for resultsIterator.HasNext() {
+		ultimoId++
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
