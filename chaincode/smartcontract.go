@@ -60,6 +60,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	}
 
 	aEmBytes, _ := json.Marshal(asset)
+	ultimoId++
 
 	return s.CreateAsset(ctx, string(aEmBytes))
 
