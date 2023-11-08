@@ -60,7 +60,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	}
 
 	aEmBytes, _ := json.Marshal(asset)
-	ultimoId++
+	
 
 	return s.CreateAsset(ctx, string(aEmBytes))
 
@@ -117,6 +117,7 @@ func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInter
 	if err != nil {
 		log.Fatalf("Erro ao salvar na ledger %s", err)
 	}
+	ultimoId++
 
 	return err
 }
