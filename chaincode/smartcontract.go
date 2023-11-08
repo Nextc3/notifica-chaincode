@@ -40,59 +40,61 @@ func (s *SmartContract) GetUltimoId() int {
 	return ultimoId
 }
 
-/**
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	assets := []Asset{
-		{ID: "asset1", Color: "blue", Size: 5, Owner: "Tomoko", AppraisedValue: 300},
-		{ID: "asset2", Color: "red", Size: 5, Owner: "Brad", AppraisedValue: 400},
-		{ID: "asset3", Color: "green", Size: 10, Owner: "Jin Soo", AppraisedValue: 500},
-		{ID: "asset4", Color: "yellow", Size: 10, Owner: "Max", AppraisedValue: 600},
-		{ID: "asset5", Color: "black", Size: 15, Owner: "Adriana", AppraisedValue: 700},
-		{ID: "asset6", Color: "white", Size: 15, Owner: "Michel", AppraisedValue: 800},
+	asset := notifica_model.Asset{
+		Id:                  0,
+		DocType:             "notificacao",
+		DataNascimento:      "28/06/1988",
+		Sexo:                "Masculino",
+		Endereco:            "Av Cardeal Avelar Brandão Villela 6",
+		Bairro:              "Jardim Santo Inácio",
+		Cidade:              "Salvador",
+		Estado:              "Bahia",
+		Pais:                "Brasil",
+		Doenca:              "Chagas",
+		DataInicioSintomas:  "01/11/2023",
+		DataDiagnostico:     "04/11/2023",
+		DataNotificacao:     "08/11/2023",
+		InformacoesClinicas: "tá ruim",
 	}
 
-	for _, asset := range assets {
+	aEmBytes, _ := json.Marshal(asset)
+
+	return s.CreateAsset(ctx, string(aEmBytes))
+
+}
+
+/*
+*
+// CreateAsset issues a new asset to the world state with given details.
+
+	func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id string, color string, size int, owner string, appraisedValue int) error {
+		exists, err := s.AssetExists(ctx, id)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("the asset %s already exists", id)
+		}
+
+		asset := notifica_model.Asset{
+			ID:             id,
+			Color:          color,
+			Size:           size,
+			Owner:          owner,
+			AppraisedValue: appraisedValue,
+		}
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
 			return err
 		}
 
-		err = ctx.GetStub().PutState(asset.ID, assetJSON)
-		if err != nil {
-			return fmt.Errorf("failed to put to world state. %v", err)
-		}
+		return ctx.GetStub().PutState(id, assetJSON)
 	}
 
-	return nil
-}
-**/
-/**
-// CreateAsset issues a new asset to the world state with given details.
-func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id string, color string, size int, owner string, appraisedValue int) error {
-	exists, err := s.AssetExists(ctx, id)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return fmt.Errorf("the asset %s already exists", id)
-	}
-
-	asset := notifica_model.Asset{
-		ID:             id,
-		Color:          color,
-		Size:           size,
-		Owner:          owner,
-		AppraisedValue: appraisedValue,
-	}
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
-
-	return ctx.GetStub().PutState(id, assetJSON)
-}
-**/
+*
+*/
 func (s *SmartContract) CreateAsset(contexto contractapi.TransactionContextInterface, asset string) error {
 
 	/**exists, err := s.AssetExists(contexto, strconv.Itoa(id))
