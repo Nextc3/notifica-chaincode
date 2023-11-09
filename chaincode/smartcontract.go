@@ -43,7 +43,7 @@ func (s *SmartContract) GetUltimoId() int {
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	asset := notifica_model.Asset{
-		Id:                  0,
+		Id:                  1,
 		DocType:             "notificacao",
 		DataNascimento:      "28/06/1988",
 		Sexo:                "Masculino",
@@ -60,7 +60,6 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	}
 
 	aEmBytes, _ := json.Marshal(asset)
-	
 
 	return s.CreateAsset(ctx, string(aEmBytes))
 
